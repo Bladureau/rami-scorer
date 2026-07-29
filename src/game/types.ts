@@ -19,6 +19,8 @@ export type HistoryItem = {
 
 export type GameState = {
   screen: ScreenName;
+  /** Écran vers lequel « Retour » ramène depuis l'historique. */
+  historyFrom: ScreenName;
   /** Noms en cours d'édition sur l'écran de configuration. */
   names: string[];
   /** Noms figés au démarrage de la partie. */

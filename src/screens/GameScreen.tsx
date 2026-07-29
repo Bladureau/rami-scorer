@@ -5,6 +5,7 @@ import {
   Card,
   Divider,
   EmptyState,
+  GhostButton,
   Overline,
   PrimaryButton,
   Rise,
@@ -19,8 +20,7 @@ const LABEL_W = 58;
 const GAP = 4;
 
 export default function GameScreen() {
-  const { state, canEditPlayers, toggleExpanded, deleteRound, startEntry, editPlayers } =
-    useGame();
+  const { state, toggleExpanded, deleteRound, startEntry, editPlayers } = useGame();
   const { players, rounds, expanded, scoreLimit } = state;
 
   const n = players.length;
@@ -156,8 +156,12 @@ export default function GameScreen() {
           );
         })}
 
+        {/* Tant qu'aucune manche n'est jouée, la composition reste modifiable. */}
         {!rounds.length ? (
-          <EmptyState>Aucune manche enregistrée. Lancez la première.</EmptyState>
+          <>
+            <EmptyState>Aucune manche enregistrée. Lancez la première.</EmptyState>
+            <GhostButton label="Modifier les joueurs" onPress={editPlayers} />
+          </>
         ) : null}
       </ScrollView>
 

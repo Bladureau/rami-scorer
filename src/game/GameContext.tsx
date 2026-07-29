@@ -23,6 +23,7 @@ export const LIMIT_STEP = 50;
 
 export const INITIAL_STATE: GameState = {
   screen: 'setup',
+  historyFrom: 'setup',
   names: ['', '', ''],
   players: [],
   rounds: [],
@@ -316,10 +317,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         // Depuis le tableau, on ne peut revenir en arrière que sur une partie
         // encore vierge — sinon il n'y a rien derrière.
         if (s.screen === 'game') return s.rounds.length ? s : backToSetup(s);
-        return { ...s, screen: s.players.length ? 'game' : 'setup' };
+        // Historique : on repart d'où on l'a ouvert, sans toucher à une saisie
+        // laissée en cours.
+        return { ...s, screen: s.historyFrom };
       }),
 
-    openHistory: () => setState((s) => ({ ...s, screen: 'history' })),
+    openHistory: () =>
+      setState((s) =>
+        s.screen === 'history' ? s : { ...s, screen: 'history', historyFrom: s.screen },
+      ),
 
     rematch: () =>
       setState((s) => ({ ...s, rounds: [], screen: 'game', expanded: null })),

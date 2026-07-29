@@ -48,6 +48,11 @@ vaut `m`.
 L'app est un flux unique piloté par `state.screen` — comme la maquette — plutôt
 qu'un navigateur : voir le `Router` dans [App.tsx](App.tsx).
 
+Tant que la partie n'a aucune manche enregistrée, on peut revenir à la
+configuration pour changer les joueurs ou la limite : flèche retour dans
+l'en-tête, ou bouton « Modifier les joueurs » sous le tableau vide. Dès la
+première manche validée, les deux disparaissent.
+
 ## La saisie
 
 Une seule manière de saisir les cartes restantes, reprise de la variante
