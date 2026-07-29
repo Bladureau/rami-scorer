@@ -1,8 +1,8 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { sumCards } from '../../cards';
-import { Overline, PrimaryButton, Touch } from '../../components/ui';
-import { useGame } from '../../game/GameContext';
+import { Notice, Overline, PrimaryButton, Touch } from '../../components/ui';
+import { missingHands, useGame } from '../../game/GameContext';
 import { C, F } from '../../theme';
 import HandEntry from './HandEntry';
 
@@ -14,6 +14,9 @@ export default function EntryScreen() {
   const boundedActive = loserIdx.length ? Math.min(activeIdx, loserIdx.length - 1) : 0;
   const activePlayer = loserIdx.length ? loserIdx[boundedActive] : 0;
   const roundTotal = loserIdx.reduce((a, i) => a + sumCards(entryCards[i]), 0);
+
+  // Un perdant garde au moins une carte, donc au moins 2 points.
+  const missing = missingHands(players, entryCards, winner);
 
   return (
     <View style={{ flex: 1, paddingHorizontal: 14, paddingTop: 12 }}>
@@ -65,6 +68,13 @@ export default function EntryScreen() {
 
       {winner != null ? (
         <View style={s.footer}>
+          {missing.length ? (
+            <Notice>
+              Chaque perdant garde au moins une carte, soit 2 points minimum. Il
+              manque : {missing.map((i) => players[i]).join(' · ')}.
+            </Notice>
+          ) : null}
+
           <View style={s.footerLine}>
             <Text style={s.footerText}>{players[winner]} a fini</Text>
             <Text style={s.footerText}>Total manche {roundTotal}</Text>
@@ -76,6 +86,7 @@ export default function EntryScreen() {
             <PrimaryButton
               label={editIdx != null ? 'Enregistrer la correction' : 'Valider la manche'}
               onPress={validate}
+              disabled={missing.length > 0}
               filled
               style={{ flex: 1 }}
             />

@@ -2,13 +2,14 @@ import Feather from '@expo/vector-icons/Feather';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useGame } from '../game/GameContext';
+import { currentTour } from '../game/limit';
 import { C, F } from '../theme';
 import { IconButton, Touch } from './ui';
 
 /** Barre supérieure : retour contextuel, titre/sous-titre par écran, historique. */
 export default function Header() {
   const { state, canEditPlayers, goBack, openHistory } = useGame();
-  const { screen, rounds, editIdx, scoreLimit } = state;
+  const { screen, rounds, editIdx, mode, scoreLimit, tourLimit, players } = state;
 
   let title = 'Historique';
   let sub = 'Parties terminées';
@@ -18,7 +19,14 @@ export default function Header() {
     sub = 'Joueurs et noms';
   } else if (screen === 'game') {
     title = 'Partie en cours';
-    sub = `${rounds.length} manche${rounds.length > 1 ? 's' : ''} · limite ${scoreLimit} pts`;
+    const manches = `${rounds.length} manche${rounds.length > 1 ? 's' : ''}`;
+    sub =
+      mode === 'points'
+        ? `${manches} · limite ${scoreLimit} pts`
+        : `${manches} · tour ${Math.min(
+            currentTour(rounds.length, players.length),
+            tourLimit,
+          )} sur ${tourLimit}`;
   } else if (screen === 'entry') {
     title = editIdx != null ? `Corriger la manche ${editIdx + 1}` : `Manche ${rounds.length + 1}`;
     sub = 'Cartes restantes des perdants';

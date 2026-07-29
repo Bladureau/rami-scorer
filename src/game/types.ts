@@ -1,3 +1,5 @@
+import type { Mode } from './limit';
+
 export type ScreenName = 'setup' | 'game' | 'entry' | 'end' | 'history';
 
 /** Main de chaque perdant, indexée par position de joueur. */
@@ -36,5 +38,9 @@ export type GameState = {
 
   expanded: number | null;
   history: HistoryItem[];
+
+  /** Condition d'arrêt : total de points atteint, ou nombre de tours joués. */
+  mode: Mode;
   scoreLimit: number;
+  tourLimit: number;
 };

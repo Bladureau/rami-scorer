@@ -1,53 +1,23 @@
-import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { Card, GhostButton, IconButton, PrimaryButton } from '../components/ui';
+import LimitControls from '../components/LimitControls';
 import {
-  LIMIT_MAX,
-  LIMIT_MIN,
-  LIMIT_STEP,
-  MIN_PLAYERS,
-  useGame,
-} from '../game/GameContext';
+  GhostButton,
+  IconButton,
+  Notice,
+  PrimaryButton,
+  StepperRow,
+} from '../components/ui';
+import { MIN_PLAYERS, useGame } from '../game/GameContext';
 import { C, F } from '../theme';
-
-/** Ligne « libellé + stepper − / valeur / + ». */
-function StepperRow({
-  title,
-  hint,
-  value,
-  onMinus,
-  onPlus,
-}: {
-  title: string;
-  hint: string;
-  value: string;
-  onMinus: () => void;
-  onPlus: () => void;
-}) {
-  return (
-    <Card style={s.stepperCard}>
-      <View style={{ flexShrink: 1 }}>
-        <Text style={s.stepperTitle}>{title}</Text>
-        <Text style={s.stepperHint}>{hint}</Text>
-      </View>
-      <View style={s.stepperControls}>
-        <IconButton icon="minus" onPress={onMinus} size={38} iconSize={15} label={`Diminuer ${title}`} />
-        <Text style={s.stepperValue}>{value}</Text>
-        <IconButton icon="plus" onPress={onPlus} size={38} iconSize={15} label={`Augmenter ${title}`} />
-      </View>
-    </Card>
-  );
-}
 
 export default function SetupScreen() {
   const {
-    state: { names, scoreLimit },
+    state: { names },
     setName,
     addSlot,
     removeSlot,
     removeSlotAt,
-    setScoreLimit,
     start,
     loadDemo,
   } = useGame();
@@ -106,20 +76,9 @@ export default function SetupScreen() {
           ))}
         </View>
 
-        <StepperRow
-          title="Limite de points"
-          hint="Le premier qui l'atteint termine la partie"
-          value={`${scoreLimit}`}
-          onMinus={() => setScoreLimit(Math.max(LIMIT_MIN, scoreLimit - LIMIT_STEP))}
-          onPlus={() => setScoreLimit(Math.min(LIMIT_MAX, scoreLimit + LIMIT_STEP))}
-        />
+        <LimitControls playerCount={filled.length} />
 
-        {!ready ? (
-          <View style={s.notice}>
-            <Feather name="info" size={15} color={C.accent300} />
-            <Text style={s.noticeText}>{errorText}</Text>
-          </View>
-        ) : null}
+        {!ready ? <Notice>{errorText}</Notice> : null}
       </ScrollView>
 
       <View style={s.footer}>
@@ -132,25 +91,6 @@ export default function SetupScreen() {
 
 const s = StyleSheet.create({
   scroll: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 8, gap: 14 },
-
-  stepperCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  stepperTitle: { fontFamily: F.medium, fontSize: 14, color: C.text },
-  stepperHint: { fontFamily: F.regular, fontSize: 11, color: C.dim, marginTop: 2 },
-  stepperControls: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  stepperValue: {
-    minWidth: 46,
-    textAlign: 'center',
-    fontFamily: F.medium,
-    fontSize: 20,
-    color: C.text,
-  },
 
   rows: { gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -176,19 +116,6 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontFamily: F.regular,
   },
-
-  notice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: C.accent800,
-    borderRadius: 8,
-    backgroundColor: C.accent900,
-  },
-  noticeText: { flex: 1, fontFamily: F.regular, fontSize: 12.5, color: C.accent300 },
 
   footer: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 10 },
 });

@@ -1,5 +1,9 @@
 import Feather from '@expo/vector-icons/Feather';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import LimitControls from '../components/LimitControls';
+import { limitValue } from '../game/limit';
 
 import {
   Card,
@@ -21,7 +25,10 @@ const GAP = 4;
 
 export default function GameScreen() {
   const { state, toggleExpanded, deleteRound, startEntry, editPlayers } = useGame();
-  const { players, rounds, expanded, scoreLimit } = state;
+  const { players, rounds, expanded, mode, scoreLimit, tourLimit } = state;
+
+  // Panneau de règles, replié par défaut.
+  const [showLimit, setShowLimit] = useState(false);
 
   const n = players.length;
   const totals = totalsOf(rounds, n);
@@ -48,11 +55,42 @@ export default function GameScreen() {
             {leaderLine}
           </Text>
         </Card>
-        <Card style={[s.statCard, { flex: 0 }]}>
-          <Overline style={{ textAlign: 'right' }}>Limite</Overline>
-          <Text style={[s.statValue, { textAlign: 'right' }]}>{scoreLimit} pts</Text>
-        </Card>
+        {/* Tuile de règles : un tap déplie mode et limite, modifiables en cours
+            de partie. */}
+        <Touch
+          onPress={() => setShowLimit((v) => !v)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showLimit }}
+          accessibilityLabel="Modifier la condition de fin de partie"
+          style={[s.statCard, s.limitCard] as any}
+        >
+          <Overline style={{ textAlign: 'right' }}>
+            {mode === 'points' ? 'Limite' : 'Tour'}
+          </Overline>
+          <View style={s.limitValueRow}>
+            <Text style={s.statValue}>
+              {limitValue({
+                mode,
+                scoreLimit,
+                tourLimit,
+                roundCount: rounds.length,
+                playerCount: n,
+              })}
+            </Text>
+            <Feather
+              name={showLimit ? 'chevron-up' : 'chevron-down'}
+              size={12}
+              color={C.faint}
+            />
+          </View>
+        </Touch>
       </View>
+
+      {showLimit ? (
+        <Rise style={{ marginHorizontal: 4, marginBottom: 14 }}>
+          <LimitControls playerCount={n} />
+        </Rise>
+      ) : null}
 
       {/* En-tête du tableau */}
       <View style={s.tableHead}>
@@ -198,6 +236,14 @@ export default function GameScreen() {
 const s = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: 8, marginHorizontal: 4, marginBottom: 14 },
   statCard: { flex: 1, paddingVertical: 10, paddingHorizontal: 12 },
+  limitCard: {
+    flex: 0,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 8,
+  },
+  limitValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
   statValue: { fontFamily: F.medium, fontSize: 15, color: C.text, marginTop: 2 },
 
   tableHead: {

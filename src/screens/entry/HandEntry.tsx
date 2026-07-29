@@ -23,6 +23,7 @@ export default function HandEntry({
 }) {
   const { state, setActiveIdx, addCard, removeLastCard } = useGame();
   const hand = state.entryCards[activePlayer];
+  const empty = !(hand ?? []).length;
 
   return (
     <View style={{ flex: 1, marginTop: 16, gap: 14 }}>
@@ -61,8 +62,11 @@ export default function HandEntry({
 
       {/* Récapitulatif de la main */}
       <Card style={s.summary}>
-        <Text style={s.line} numberOfLines={1}>
-          {cardsLine(hand)}
+        <Text
+          style={[s.line, empty ? { color: C.faint } : null]}
+          numberOfLines={1}
+        >
+          {empty ? 'Aucune carte — 2 points minimum' : cardsLine(hand)}
         </Text>
         <IconButton
           icon="delete"

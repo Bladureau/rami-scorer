@@ -10,16 +10,21 @@ import React, {
 } from 'react';
 
 import { sumCards } from '../cards';
-import type { GameState, Hands, Round, ScreenName } from './types';
+import {
+  LIMIT_MAX,
+  LIMIT_MIN,
+  TOURS_MAX,
+  TOURS_MIN,
+  isGameOver,
+  type Mode,
+} from './limit';
+import type { GameState, Hands, Round } from './types';
 
 const STORAGE_KEY = 'rami-tracker-v1';
 
 export const MIN_PLAYERS = 3;
 export const MAX_SLOTS = 8;
 export const MIN_SLOTS = 2;
-export const LIMIT_MIN = 100;
-export const LIMIT_MAX = 1000;
-export const LIMIT_STEP = 50;
 
 export const INITIAL_STATE: GameState = {
   screen: 'setup',
@@ -33,8 +38,26 @@ export const INITIAL_STATE: GameState = {
   editIdx: null,
   expanded: null,
   history: [],
+  mode: 'points',
   scoreLimit: 500,
+  tourLimit: 3,
 };
+
+/**
+ * Perdants dont la main est encore vide. Un joueur qui n'a pas fini garde au
+ * moins une carte, et la plus faible vaut 2 points : un perdant à 0 est donc
+ * impossible.
+ */
+export function missingHands(
+  players: string[],
+  entryCards: Hands,
+  winner: number | null,
+): number[] {
+  if (winner == null) return [];
+  return players
+    .map((_, i) => i)
+    .filter((i) => i !== winner && !(entryCards[i] ?? []).length);
+}
 
 /** Cumul par joueur sur l'ensemble des manches. */
 export function totalsOf(rounds: Round[], playerCount: number): number[] {
@@ -68,6 +91,56 @@ function backToSetup(s: GameState): GameState {
   };
 }
 
+/**
+ * Bascule sur l'écran de fin si la condition d'arrêt est atteinte, et archive
+ * la partie. Appelé après chaque manche validée, mais aussi quand la limite
+ * change en cours de partie — la baisser sous les scores déjà atteints termine
+ * donc la partie immédiatement.
+ */
+function concludeIfOver(s: GameState): GameState {
+  const n = s.players.length;
+  if (!n || !s.rounds.length) return s;
+
+  const totals = totalsOf(s.rounds, n);
+  const over = isGameOver({
+    mode: s.mode,
+    totals,
+    scoreLimit: s.scoreLimit,
+    roundCount: s.rounds.length,
+    playerCount: n,
+    tourLimit: s.tourLimit,
+  });
+  if (!over) return s;
+
+  // Le plus petit score gagne.
+  const best = s.players
+    .map((name, i) => ({ name, total: totals[i] }))
+    .sort((a, b) => a.total - b.total)[0];
+
+  return {
+    ...s,
+    screen: 'end',
+    expanded: null,
+    history: [
+      {
+        date: today(),
+        winner: best.name,
+        line: `${n} joueurs · ${s.rounds.length} manches · ${best.total} pts`,
+      },
+      ...s.history,
+    ],
+  };
+}
+
+/**
+ * Applique un changement de règle. En pleine partie, la nouvelle condition est
+ * réévaluée aussitôt : la partie peut donc se terminer sur-le-champ. Sur
+ * l'écran de configuration, rien n'est encore joué, on se contente de stocker.
+ */
+function applyLimitChange(prev: GameState, next: GameState): GameState {
+  return prev.screen === 'game' ? concludeIfOver(next) : next;
+}
+
 function today(): string {
   return new Date().toLocaleDateString('fr-FR', {
     day: '2-digit',
@@ -85,7 +158,9 @@ type Actions = {
   addSlot: () => void;
   removeSlot: () => void;
   removeSlotAt: (i: number) => void;
+  setMode: (m: Mode) => void;
   setScoreLimit: (v: number) => void;
+  setTourLimit: (v: number) => void;
   start: () => void;
   loadDemo: () => void;
   /** Retour à la configuration, sans effet dès qu'une manche est enregistrée. */
@@ -185,8 +260,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return { ...s, names };
       }),
 
+    setMode: (mode) =>
+      setState((s) => applyLimitChange(s, { ...s, mode })),
+
     setScoreLimit: (v) =>
-      setState((s) => ({ ...s, scoreLimit: clamp(v, LIMIT_MIN, LIMIT_MAX) })),
+      setState((s) =>
+        applyLimitChange(s, { ...s, scoreLimit: clamp(v, LIMIT_MIN, LIMIT_MAX) }),
+      ),
+
+    setTourLimit: (v) =>
+      setState((s) =>
+        applyLimitChange(s, { ...s, tourLimit: clamp(v, TOURS_MIN, TOURS_MAX) }),
+      ),
 
     start: () =>
       setState((s) => {
@@ -259,6 +344,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     validate: () =>
       setState((s) => {
         if (s.winner == null) return s;
+        // Chaque perdant doit avoir au moins une carte saisie.
+        if (missingHands(s.players, s.entryCards, s.winner).length) return s;
         const winner = s.winner;
         const scores = s.players.map((_, i) =>
           i === winner ? 0 : sumCards(s.entryCards[i]),
@@ -269,35 +356,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (s.editIdx != null) rounds[s.editIdx] = round;
         else rounds.push(round);
 
-        const t = totalsOf(rounds, s.players.length);
-        const over = t.some((v) => v >= s.scoreLimit);
-
-        let history = s.history;
-        if (over) {
-          // Le plus petit score gagne.
-          const best = s.players
-            .map((n, i) => ({ n, t: t[i] }))
-            .sort((a, b) => a.t - b.t)[0];
-          history = [
-            {
-              date: today(),
-              winner: best.n,
-              line: `${s.players.length} joueurs · ${rounds.length} manches · ${best.t} pts`,
-            },
-            ...s.history,
-          ];
-        }
-
-        return {
+        return concludeIfOver({
           ...s,
           rounds,
-          history,
-          screen: over ? ('end' as ScreenName) : ('game' as ScreenName),
+          screen: 'game',
           winner: null,
           entryCards: {},
           editIdx: null,
           expanded: null,
-        };
+        });
       }),
 
     cancelEntry: () =>

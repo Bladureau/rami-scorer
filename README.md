@@ -13,8 +13,28 @@ Puis `a` pour Android, `i` pour iOS, ou scanner le QR code avec Expo Go.
 
 Les cartes restantes des perdants comptent en pénalité, **le plus petit score
 gagne**. Barème : 2–9 = valeur faciale, 10/V/D/R = 10, As = 11, Joker = 20.
+
+Un joueur qui n'a pas fini garde forcément au moins une carte, et la plus
+faible vaut 2 points : la validation d'une manche est donc bloquée tant qu'un
+perdant a une main vide (`missingHands` dans
+[GameContext.tsx](src/game/GameContext.tsx)).
 La partie s'arrête dès qu'un joueur atteint la limite (500 pts par défaut,
 réglable de 100 à 1000 par pas de 50 sur l'écran de configuration).
+
+### Condition d'arrêt
+
+Deux modes, réglables à la configuration **et en cours de partie** (tuile de
+droite du tableau, un tap la déplie) — voir
+[limit.ts](src/game/limit.ts) et [LimitControls.tsx](src/components/LimitControls.tsx) :
+
+- **Aux points** (défaut) — la partie s'arrête dès qu'un joueur atteint la
+  limite, réglable de 100 à 1000 par pas de 50.
+- **Aux tours** — la partie s'arrête après N tours complets. Un tour vaut
+  autant de manches qu'il y a de joueurs : c'est bouclé quand le mélangeur
+  revient sur le premier joueur.
+
+Changer la règle en cours de partie réévalue la condition immédiatement.
+Baisser la limite sous un score déjà atteint termine donc la partie sur-le-champ.
 
 ### Rotation des rôles
 
@@ -69,6 +89,7 @@ src/theme.ts               jetons de couleur et de typographie du design
 src/cards.ts               barème, totaux, rendu compact d'une main
 src/game/types.ts          types de l'état de partie
 src/game/roles.ts          mélange / coupe / donne / commence par manche
+src/game/limit.ts          modes points / tours et condition de fin
 src/game/GameContext.tsx   état + actions + persistance AsyncStorage
 src/components/ui.tsx      boutons, cartes, grille mesurée, animation « rise »
 src/components/Header.tsx  barre supérieure contextuelle

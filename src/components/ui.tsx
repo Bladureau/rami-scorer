@@ -239,6 +239,97 @@ export function Rise({
   );
 }
 
+/* ─────────── Contrôles ─────────── */
+
+/** Ligne « libellé + stepper − / valeur / + ». */
+export function StepperRow({
+  title,
+  hint,
+  value,
+  onMinus,
+  onPlus,
+  style,
+}: {
+  title: string;
+  hint: string;
+  value: string;
+  onMinus: () => void;
+  onPlus: () => void;
+  style?: ViewStyle;
+}) {
+  return (
+    <Card style={[s.stepperCard, style] as ViewStyle[]}>
+      <View style={{ flexShrink: 1 }}>
+        <Text style={s.stepperTitle}>{title}</Text>
+        <Text style={s.stepperHint}>{hint}</Text>
+      </View>
+      <View style={s.stepperControls}>
+        <IconButton icon="minus" onPress={onMinus} size={38} iconSize={15} label={`Diminuer : ${title}`} />
+        <Text style={s.stepperValue}>{value}</Text>
+        <IconButton icon="plus" onPress={onPlus} size={38} iconSize={15} label={`Augmenter : ${title}`} />
+      </View>
+    </Card>
+  );
+}
+
+/** Sélecteur exclusif à onglets, dans un rail encadré. */
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  style,
+}: {
+  options: { key: T; label: string }[];
+  value: T;
+  onChange: (key: T) => void;
+  style?: ViewStyle;
+}) {
+  return (
+    <View style={[s.segment, style]}>
+      {options.map((o) => {
+        const on = o.key === value;
+        return (
+          <Touch
+            key={o.key}
+            onPress={() => onChange(o.key)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
+            style={[
+              s.segmentBtn,
+              {
+                borderColor: on ? C.accent : 'transparent',
+                backgroundColor: on ? C.accent900 : 'transparent',
+              },
+            ] as ViewStyle[]}
+          >
+            <Text style={[s.segmentLabel, { color: on ? C.accent300 : C.muted }]}>
+              {o.label}
+            </Text>
+          </Touch>
+        );
+      })}
+    </View>
+  );
+}
+
+/* ─────────── Messages ─────────── */
+
+/** Encart d'information à la teinte accent, pour les règles bloquantes. */
+export function Notice({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: ViewStyle;
+}) {
+  return (
+    <View style={[s.notice, style]}>
+      <Feather name="info" size={15} color={C.accent300} />
+      <Text style={s.noticeText}>{children}</Text>
+    </View>
+  );
+}
+
 /* ─────────── États vides ─────────── */
 
 export function EmptyState({ children }: { children: React.ReactNode }) {
@@ -279,5 +370,61 @@ const s = StyleSheet.create({
     color: C.faint,
     fontSize: 12.5,
     fontFamily: F.regular,
+  },
+  stepperCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  stepperTitle: { fontFamily: F.medium, fontSize: 14, color: C.text },
+  stepperHint: { fontFamily: F.regular, fontSize: 11, color: C.dim, marginTop: 2 },
+  stepperControls: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  stepperValue: {
+    minWidth: 46,
+    textAlign: 'center',
+    fontFamily: F.medium,
+    fontSize: 20,
+    color: C.text,
+  },
+
+  segment: {
+    flexDirection: 'row',
+    gap: 4,
+    padding: 3,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 8,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  segmentLabel: { fontFamily: F.medium, fontSize: 11.5 },
+
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: C.accent800,
+    borderRadius: 8,
+    backgroundColor: C.accent900,
+  },
+  noticeText: {
+    flex: 1,
+    fontFamily: F.regular,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: C.accent300,
   },
 });
