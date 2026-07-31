@@ -9,7 +9,7 @@ import { IconButton, Touch } from './ui';
 /** Barre supérieure : retour contextuel, titre/sous-titre par écran, historique. */
 export default function Header() {
   const { state, canEditPlayers, goBack, openHistory } = useGame();
-  const { screen, rounds, editIdx, mode, scoreLimit, tourLimit, players } = state;
+  const { screen, rounds, editIdx, mode, scoreLimit, tourLimit, players, endSuspended } = state;
 
   let title = 'Historique';
   let sub = 'Parties terminées';
@@ -20,8 +20,11 @@ export default function Header() {
   } else if (screen === 'game') {
     title = 'Partie en cours';
     const manches = `${rounds.length} manche${rounds.length > 1 ? 's' : ''}`;
-    sub =
-      mode === 'points'
+    // Partie reprise après sa fin : annoncer la limite serait faux, elle ne
+    // s'applique plus.
+    sub = endSuspended
+      ? `${manches} · prolongation`
+      : mode === 'points'
         ? `${manches} · limite ${scoreLimit} pts`
         : `${manches} · tour ${Math.min(
             currentTour(rounds.length, players.length),
@@ -29,7 +32,7 @@ export default function Header() {
           )} sur ${tourLimit}`;
   } else if (screen === 'entry') {
     title = editIdx != null ? `Corriger la manche ${editIdx + 1}` : `Manche ${rounds.length + 1}`;
-    sub = 'Cartes restantes des perdants';
+    sub = 'Points restants des perdants';
   } else if (screen === 'end') {
     title = 'Fin de partie';
     sub = 'Le plus petit score gagne';

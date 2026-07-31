@@ -1,13 +1,13 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Card, GhostButton, PrimaryButton } from '../components/ui';
+import { Card, GhostButton, OutlineButton, PrimaryButton } from '../components/ui';
 import { totalsOf, useGame } from '../game/GameContext';
 import { toursPlayed } from '../game/limit';
 import { C, F } from '../theme';
 
 export default function EndScreen() {
-  const { state, rematch, newGame } = useGame();
-  const { players, rounds, mode, scoreLimit } = state;
+  const { state, rematch, newGame, resumeGame } = useGame();
+  const { players, rounds, mode, scoreLimit, endedEarly } = state;
 
   const totals = totalsOf(rounds, players.length);
   // Le plus petit score gagne.
@@ -59,15 +59,20 @@ export default function EndScreen() {
 
         <Card style={s.stats}>
           <Text style={s.statsText}>
-            {mode === 'points'
-              ? `${rounds.length} manches jouées · limite ${scoreLimit} pts atteinte par ${last?.name ?? '—'}`
-              : `${rounds.length} manches jouées · ${toursPlayed(rounds.length, players.length)} tours complets`}
+            {endedEarly
+              ? `${rounds.length} manches jouées · partie arrêtée avant la fin`
+              : mode === 'points'
+                ? `${rounds.length} manches jouées · limite ${scoreLimit} pts atteinte par ${last?.name ?? '—'}`
+                : `${rounds.length} manches jouées · ${toursPlayed(rounds.length, players.length)} tours complets`}
           </Text>
         </Card>
       </ScrollView>
 
       <View style={s.footer}>
         <PrimaryButton label="Rejouer avec les mêmes joueurs" onPress={rematch} />
+        {/* Fin déclenchée trop tôt, ou envie de prolonger : on repart du
+            tableau avec les scores en cours. */}
+        <OutlineButton label="Continuer cette partie" onPress={resumeGame} />
         <GhostButton label="Nouvelle configuration" onPress={newGame} />
       </View>
     </View>

@@ -2,7 +2,7 @@ import { View } from 'react-native';
 
 import { useGame } from '../game/GameContext';
 import { LIMIT_STEP, TOURS_STEP, type Mode, roundsPerTour } from '../game/limit';
-import { Segmented, StepperRow } from './ui';
+import { Notice, Segmented, StepperRow } from './ui';
 
 const MODES: { key: Mode; label: string }[] = [
   { key: 'points', label: 'Aux points' },
@@ -20,7 +20,7 @@ export default function LimitControls({
   playerCount: number;
 }) {
   const { state, setMode, setScoreLimit, setTourLimit } = useGame();
-  const { mode, scoreLimit, tourLimit } = state;
+  const { mode, scoreLimit, tourLimit, endSuspended } = state;
 
   const perTour = roundsPerTour(playerCount);
 
@@ -49,6 +49,14 @@ export default function LimitControls({
           onPlus={() => setTourLimit(tourLimit + TOURS_STEP)}
         />
       )}
+
+      {endSuspended ? (
+        <Notice>
+          Partie prolongée : la condition d'arrêt est déjà franchie, elle est
+          donc en sommeil. Relevez-la pour la réactiver, ou arrêtez la partie
+          depuis le tableau.
+        </Notice>
+      ) : null}
     </View>
   );
 }

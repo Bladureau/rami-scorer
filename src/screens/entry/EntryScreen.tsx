@@ -1,25 +1,37 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
-import { sumCards } from '../../cards';
 import { Notice, Overline, PrimaryButton, Touch } from '../../components/ui';
-import { missingHands, useGame } from '../../game/GameContext';
+import { entryScore, missingScores, useGame } from '../../game/GameContext';
 import { C, F } from '../../theme';
 import HandEntry from './HandEntry';
 
 export default function EntryScreen() {
   const { state, setWinner, validate, cancelEntry } = useGame();
-  const { players, winner, entryCards, activeIdx, editIdx } = state;
+  const { players, winner, entryCards, entryPoints, activeIdx, editIdx } = state;
 
   const loserIdx = players.map((_, i) => i).filter((i) => i !== winner);
   const boundedActive = loserIdx.length ? Math.min(activeIdx, loserIdx.length - 1) : 0;
   const activePlayer = loserIdx.length ? loserIdx[boundedActive] : 0;
-  const roundTotal = loserIdx.reduce((a, i) => a + sumCards(entryCards[i]), 0);
+  const roundTotal = loserIdx.reduce(
+    (a, i) => a + entryScore(entryCards, entryPoints, i),
+    0,
+  );
 
   // Un perdant garde au moins une carte, donc au moins 2 points.
-  const missing = missingHands(players, entryCards, winner);
+  const missing = missingScores(players, entryCards, entryPoints, winner);
 
   return (
-    <View style={{ flex: 1, paddingHorizontal: 14, paddingTop: 12 }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, paddingHorizontal: 14, paddingTop: 12 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 8 }}
@@ -54,7 +66,7 @@ export default function EntryScreen() {
           <View style={s.placeholder}>
             <Text style={s.placeholderText}>
               Sélectionnez le joueur qui a posé toutes ses cartes pour saisir les
-              cartes restantes des autres.
+              points restants des autres.
             </Text>
           </View>
         ) : (
@@ -70,8 +82,9 @@ export default function EntryScreen() {
         <View style={s.footer}>
           {missing.length ? (
             <Notice>
-              Chaque perdant garde au moins une carte, soit 2 points minimum. Il
-              manque : {missing.map((i) => players[i]).join(' · ')}.
+              Chaque perdant garde au moins une carte, soit 2 points minimum :
+              pointez ses cartes ou saisissez son score. Il manque :{' '}
+              {missing.map((i) => players[i]).join(' · ')}.
             </Notice>
           ) : null}
 
@@ -93,7 +106,7 @@ export default function EntryScreen() {
           </View>
         </View>
       ) : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

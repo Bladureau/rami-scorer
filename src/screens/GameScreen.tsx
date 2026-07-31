@@ -1,6 +1,6 @@
 import Feather from '@expo/vector-icons/Feather';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import LimitControls from '../components/LimitControls';
 import { limitValue } from '../game/limit';
@@ -24,8 +24,8 @@ const LABEL_W = 58;
 const GAP = 4;
 
 export default function GameScreen() {
-  const { state, toggleExpanded, deleteRound, startEntry, editPlayers } = useGame();
-  const { players, rounds, expanded, mode, scoreLimit, tourLimit } = state;
+  const { state, toggleExpanded, deleteRound, startEntry, editPlayers, endGame } = useGame();
+  const { players, rounds, expanded, mode, scoreLimit, tourLimit, endSuspended } = state;
 
   // Panneau de règles, replié par défaut.
   const [showLimit, setShowLimit] = useState(false);
@@ -37,6 +37,17 @@ export default function GameScreen() {
 
   // Rôles de la manche à venir.
   const roles = rolesFor(rounds.length, n);
+
+  // Arrêt manuel : le classement est figé, on demande confirmation.
+  const confirmEnd = () =>
+    Alert.alert(
+      'Terminer la partie ?',
+      `Le classement sera figé sur les scores actuels : ${leaderLine} en tête.`,
+      [
+        { text: 'Continuer à jouer', style: 'cancel' },
+        { text: 'Terminer', style: 'destructive', onPress: endGame },
+      ],
+    );
 
   // Cumuls ligne par ligne, recalculés à chaque rendu.
   const running = new Array<number>(n).fill(0);
@@ -64,8 +75,10 @@ export default function GameScreen() {
           accessibilityLabel="Modifier la condition de fin de partie"
           style={[s.statCard, s.limitCard] as any}
         >
+          {/* Après une reprise, la condition ne s'applique plus : on le dit
+              ici, le détail est dans le panneau déplié. */}
           <Overline style={{ textAlign: 'right' }}>
-            {mode === 'points' ? 'Limite' : 'Tour'}
+            {endSuspended ? 'Prolongée' : mode === 'points' ? 'Limite' : 'Tour'}
           </Overline>
           <View style={s.limitValueRow}>
             <Text style={s.statValue}>
@@ -157,7 +170,9 @@ export default function GameScreen() {
                         <Text style={s.detailCards} numberOfLines={1}>
                           {i === round.winner
                             ? 'A posé toutes ses cartes'
-                            : cardsLine(round.cards[i])}
+                            : (round.cards[i] ?? []).length
+                              ? cardsLine(round.cards[i])
+                              : 'Score saisi directement'}
                         </Text>
                         <Text
                           style={[
@@ -228,6 +243,10 @@ export default function GameScreen() {
           onPress={() => startEntry(null)}
           style={{ paddingVertical: 13 }}
         />
+        {/* Rien à figer tant qu'aucune manche n'est jouée. */}
+        {rounds.length ? (
+          <GhostButton label="Terminer la partie" onPress={confirmEnd} />
+        ) : null}
       </View>
     </View>
   );
@@ -318,5 +337,5 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
 
-  footer: { paddingHorizontal: 6, paddingTop: 14, paddingBottom: 12 },
+  footer: { paddingHorizontal: 6, paddingTop: 14, paddingBottom: 12, gap: 2 },
 });
