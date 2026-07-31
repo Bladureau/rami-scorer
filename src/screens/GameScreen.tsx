@@ -62,7 +62,7 @@ export default function GameScreen() {
       <View style={s.statsRow}>
         <Card style={s.statCard}>
           <Overline>En tête</Overline>
-          <Text style={[s.statValue, { color: C.accent300 }]} numberOfLines={1}>
+          <Text style={[s.statValue, { color: C.pointlead }]} numberOfLines={1}>
             {leaderLine}
           </Text>
         </Card>
@@ -147,7 +147,7 @@ export default function GameScreen() {
                     <Text
                       style={[
                         s.cell,
-                        { color: round.scores[i] === 0 ? C.accent300 : C.text },
+                        { color: round.scores[i] === 0 ? C.pointlead : C.text },
                       ]}
                     >
                       {cum}

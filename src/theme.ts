@@ -17,9 +17,11 @@ export const C = {
   faint: '#595d6c',
 
   accent: '#9184d9',
-  accent300: '#d2cefd',
+  accent300: '#fdcece',
   accent800: '#423a6a',
   accent900: '#2b2741',
+
+  pointlead: '#ff0000',
 
   hairline: 'rgba(233,233,237,0.09)',
   hairlineSoft: 'rgba(233,233,237,0.06)',
